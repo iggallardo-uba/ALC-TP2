@@ -43,8 +43,8 @@ def chequeoDieta(data):
     maxProteina = cantidadTotal*0.15
     
     #Maximo/Minimo HC
-    minHC = cantidadTotal*0.1
-    maxHC = cantidadTotal*0.15
+    minHC = cantidadTotal*0.55
+    maxHC = cantidadTotal*0.75
     
     #Maximo/Minimo Grasas
     minGrasas = cantidadTotal*0.15
