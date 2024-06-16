@@ -23,8 +23,10 @@ def tabla_view():
     #Tabla nutricional
     tabla_nutricional = pd.read_csv("data/tabla_nutricional.csv", sep=",")
 
+    #Completar ceros
     tabla_nutricional[tabla_nutricional.isna()] = 0
 
+    #Renombramiento y recalculo de NA, Ca y Fe
     tabla_nutricional = tabla_nutricional.rename(columns={"Na (mg)":"Na (gr)", "Ca (mg)": "Ca (gr)", "Fe (mg)": "Fe (gr)"})
 
     tabla_nutricional[["Na (gr)","Ca (gr)","Fe (gr)"]] = tabla_nutricional[["Na (gr)","Ca (gr)","Fe (gr)"]]  / 1000
@@ -32,6 +34,8 @@ def tabla_view():
     return tabla_nutricional
 
 def chequeoDieta(data):
+    chequeo = True
+    
     #Frutas y Verduras
     data_VF = data[data["Verdura/Fruta"] == 1]
 
@@ -58,11 +62,29 @@ def chequeoDieta(data):
     fibra = sum(data["Fibra (gr)"])
     VF = sum(data_VF["Cantidad (gr/ml)"])
         
-    print(minProteina, proteina, maxProteina)   
+    #Chequeos
+    print(minProteina, proteina, maxProteina) 
+    if minProteina < proteina < maxProteina:
+        chequeo = False
+      
     print(minHC, HC, maxHC) 
-    print(minGrasas, grasas, maxGrasas) 
-    print(Na," > ", 0.2)
-    print(fibra," > ", 25) 
-    print(VF, ">=", 400)
+    if minHC < HC < maxHC:
+        chequeo = False
         
-    return True
+    print(minGrasas, grasas, maxGrasas) 
+    if minGrasas < grasas < maxGrasas:
+        chequeo = False
+        
+    print(Na," > ", 0.2)
+    if Na  < 0.2:
+        chequeo = False
+        
+    print(fibra," > ", 25) 
+    if fibra < 25:
+        chequeo = False
+        
+    print(VF, ">=", 400)
+    if VF < 400:
+        chequeo = False
+        
+    return chequeo
