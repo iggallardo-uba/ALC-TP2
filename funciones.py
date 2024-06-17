@@ -17,21 +17,38 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 #Datos de Precio
-Precios = pd.read_csv("data/consumidores_libres.csv")
+consumidores_original = pd.read_csv('data/consumidores_libres.csv',sep=";",encoding='latin-1',skipinitialspace=True)
+nutricional_original = pd.read_csv('data/tabla_nutricional.csv',sep=";",encoding='latin-1',skipinitialspace=True)
 
-def tabla_view():
-    #Tabla nutricional
-    tabla_nutricional = pd.read_csv("data/tabla_nutricional.csv", sep=",")
+#Formateado de Dataframes
+#Todas las filas en mayuscula
+def Mayuscula(x): 
+  if type(x)==str:
+    res=x.upper()
+  else:
+    res=x
+  return res
 
-    #Completar ceros
-    tabla_nutricional[tabla_nutricional.isna()] = 0
+consumidores=consumidores_original.applymap(Mayuscula)
+nutricional=nutricional_original.applymap(Mayuscula)
 
-    #Renombramiento y recalculo de NA, Ca y Fe
-    tabla_nutricional = tabla_nutricional.rename(columns={"Na (mg)":"Na (gr)", "Ca (mg)": "Ca (gr)", "Fe (mg)": "Fe (gr)"})
+#Llenado de Ceros
+consumidores=consumidores.fillna(0)
+nutricional=nutricional.fillna(0)
 
-    tabla_nutricional[["Na (gr)","Ca (gr)","Fe (gr)"]] = tabla_nutricional[["Na (gr)","Ca (gr)","Fe (gr)"]]  / 1000
+#Cambio todos los datos en unidad de gramos
+nutricional[['Na (mg)', 'Ca (mg)', 'Fe (mg)']] = nutricional[['Na (mg)', 'Ca (mg)', 'Fe (mg)']] / 1000
+nutricional = nutricional.rename(columns={'Na (mg)': 'Na (gr)','Ca (mg)':'Ca (gr)','Fe (mg)':'Fe (gr)'})
 
-    return tabla_nutricional
+#Agrego unidades a consumidores
+consumidores = consumidores.rename(columns={'Cantidad': 'Cantidad (gr)','31/12/2023':'31/12/2023 ($)','31/1/2024':'31/1/2024 ($)',
+                                            '29/2/2024':'29/2/2024 ($)','31/3/2024':'31/3/2024 ($)','30/4/2024':'30/4/2024 ($)'})
+
+def tabla_nutricional():
+    return nutricional
+
+def tabla_consumidores():
+    return consumidores
 
 def chequeoDieta(data):
     chequeo = True
