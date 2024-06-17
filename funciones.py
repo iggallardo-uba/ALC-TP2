@@ -29,8 +29,66 @@ def Mayuscula(x):
     res=x
   return res
 
+#Sacar Acentos 
+def sacar_acentos(x):
+    reemplazar = (('Á','A'),('É','E'),('Í','I'),('Ó','O'),('Ú','U'))
+    if type(x)==str:
+      for (i,j) in reemplazar:
+          x = x.replace(i,j)
+    return x
+
+#Arreglo para el punto 4
+def arreglo_observacional(x):
+  if type(x)==str:
+    if 'LECHE' in x and x!='DULCE DE LECHE':
+      return "LECHE"
+    elif 'ACEITE'  in x:
+      return "ACEITE"
+    elif 'ARROZ'  in x:
+      return "ARROZ"
+    elif 'AZUCAR'  in x:
+      return "AZUCAR"
+    elif 'FIDEOS'  in x:
+      return "FIDEOS"
+    elif 'HARINA'  in x and 'TRIGO' in x:
+      return "HARINA DE TRIGO"
+    elif 'HUEVO'  in x:
+      return "HUEVO"
+    elif 'PAN'  in x:
+      return "PAN"
+    elif 'YERBA'  in x:
+      return "YERBA"
+    elif 'TOMATE'  in x:
+      return "TOMATE"
+    elif 'PAPA'  in x:
+      return "PAPA"
+    elif 'ACELGA'  in x:
+      return "ACELGA"
+    elif 'ZANAHORIA'  in x:
+      return "ZANAHORIA"
+    elif 'BERENJENA'  in x:
+      return "BERENJENA"
+    elif 'NARANJA'  in x:
+      return "NARANJA"
+    elif 'MANZANA' in x:
+      return "MANZANA"
+    elif 'CEBOLLA' in x:
+      return "CEBOLLA"
+    elif 'CARNE PICADA' in x:
+      return "CARNE PICADA"
+    elif 'PALETA' in x:
+      return "PALETA"
+    elif 'BOLA DE LOMO' in x:
+      return "BOLA DE LOMO"
+    elif 'ASADO' in x:
+      return "ASADO"
+  return x
+
 consumidores=consumidores_original.applymap(Mayuscula)
 nutricional=nutricional_original.applymap(Mayuscula)
+
+consumidores=consumidores.applymap(sacar_acentos)
+nutricional=nutricional.applymap(sacar_acentos)
 
 #Llenado de Ceros
 consumidores=consumidores.fillna(0)
@@ -39,6 +97,21 @@ nutricional=nutricional.fillna(0)
 #Cambio todos los datos en unidad de gramos
 nutricional[['Na (mg)', 'Ca (mg)', 'Fe (mg)']] = nutricional[['Na (mg)', 'Ca (mg)', 'Fe (mg)']] / 1000
 nutricional = nutricional.rename(columns={'Na (mg)': 'Na (gr)','Ca (mg)':'Ca (gr)','Fe (mg)':'Fe (gr)'})
+
+#Agregado de Verduras/Frutas
+#codigo binario 1= verdura o fruta y 0 no lo es
+FrutasyVerduras=['ACELGA','ZANAHORIA','TOMATE','LECHUGA','CEBOLLA','ZAPALLO','MANZANA','NARANJA','MANDARINA','PERA','BANANA','PAPA','BATATA']
+Verdura_fruta= []
+
+for index, fila in nutricional.iterrows():
+    if fila['Alimento'] in FrutasyVerduras:
+        Verdura_fruta.append(1)
+    else:
+        Verdura_fruta.append(0)
+
+# Agregamos la columna 'Verdura/Fruta' al DataFrame
+nutricional['Verdura/Fruta'] = Verdura_fruta
+
 
 #Agrego unidades a consumidores
 consumidores = consumidores.rename(columns={'Cantidad': 'Cantidad (gr)','31/12/2023':'31/12/2023 ($)','31/1/2024':'31/1/2024 ($)',
