@@ -114,8 +114,7 @@ nutricional['Verdura/Fruta'] = Verdura_fruta
 
 
 #Agrego unidades a consumidores
-consumidores = consumidores.rename(columns={'Cantidad': 'Cantidad (gr)','31/12/2023':'31/12/2023 ($)','31/1/2024':'31/1/2024 ($)',
-                                            '29/2/2024':'29/2/2024 ($)','31/3/2024':'31/3/2024 ($)','30/4/2024':'30/4/2024 ($)'})
+consumidores = consumidores.rename(columns={'Cantidad': 'Cantidad (gr)'})
 
 def tabla_nutricional():
     return nutricional
