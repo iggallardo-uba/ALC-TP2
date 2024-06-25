@@ -3,7 +3,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import seaborn.objects as so
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+import datetime as dt
+from sklearn import linear_model 
+
 
 # Para clustering
 from sklearn.datasets import make_blobs
@@ -40,7 +44,7 @@ def sacar_acentos(x):
 #Arreglo para el punto 4
 def arreglo_observacional(x):
   if type(x)==str:
-    if 'LECHE' in x and (x!='DULCE DE LECHE' or x!="LECHE ENTERA EN POLVO"):
+    if 'LECHE' in x and x!='DULCE DE LECHE' and x!="LECHE ENTERA EN POLVO":
       return "LECHE"
     elif 'ACEITE'  in x:
       return "ACEITE"
@@ -80,7 +84,7 @@ def arreglo_observacional(x):
       return "PALETA"
     elif 'BOLA DE LOMO' in x:
       return "BOLA DE LOMO"
-    elif 'ASADO' in x:
+    elif 'ASADO' in x and x != "TOMATE ENVASADO":
       return "ASADO"
   return x
 
@@ -201,3 +205,133 @@ def chequeoDieta(data):
         print("False")
         
     return chequeo
+
+def graficosNutricionales(data):
+  #HC
+  HC__Nutricional = data[data["HC (gr)"] > 0].drop(columns=["Proteinas (gr)", "Grasas (gr)"]).reset_index(drop=True)
+
+  HC__Nutricional["Precio por gr ($)"] = HC__Nutricional["Precio por gr ($)"] / HC__Nutricional["HC (gr)"]
+
+  HC__Nutricional = HC__Nutricional.rename(columns={"Precio por gr ($)":"Precio por gr de HC ($)"})
+
+  #Proteina
+  Pr__Nutricional = data[data["Proteinas (gr)"] > 0].drop(columns=["HC (gr)", "Grasas (gr)"]).reset_index(drop=True)
+
+  Pr__Nutricional["Precio por gr ($)"] = Pr__Nutricional["Precio por gr ($)"] / Pr__Nutricional["Proteinas (gr)"]
+
+  Pr__Nutricional = Pr__Nutricional.rename(columns={"Precio por gr ($)":"Precio por gr de Proteinas ($)"})
+
+  #Grasas
+  Gr__Nutricional = data[data["Grasas (gr)"] > 0].drop(columns=["HC (gr)", "Proteinas (gr)"]).reset_index(drop=True)
+
+  Gr__Nutricional["Precio por gr ($)"] = Gr__Nutricional["Precio por gr ($)"] / Gr__Nutricional["Grasas (gr)"]
+
+  Gr__Nutricional = Gr__Nutricional.rename(columns={"Precio por gr ($)":"Precio por gr de Grasas ($)"})
+
+  display(
+    so.Plot(data, x="Fecha", y="Precio por gr ($)", color="Alimento")
+    .add(so.Dot())
+    .add(so.Line(linewidth=1), so.PolyFit(1))
+  )
+  if len(Pr__Nutricional) !=0:
+    display(
+      so.Plot(data=Pr__Nutricional, x="Fecha", y="Precio por gr de Proteinas ($)", color="Alimento")
+      .add(so.Dot())
+      .add(so.Line(linewidth=1), so.PolyFit(1))
+    )
+  else:
+     print("Los Alimentos seleccionados no tienen Proteinas")
+  if len(HC__Nutricional) != 0:
+    display(
+      so.Plot(data=HC__Nutricional, x="Fecha", y="Precio por gr de HC ($)", color="Alimento")
+      .add(so.Dot())
+      .add(so.Line(linewidth=1), so.PolyFit(1))
+    )
+  else:
+     print("Los Alimentos seleccionados no tienen Hidratos de Carbono (HC)")
+  if len(Gr__Nutricional) != 0:
+    display(
+      so.Plot(Gr__Nutricional, x="Fecha", y="Precio por gr de Grasas ($)", color="Alimento")
+      .add(so.Dot())
+      .add(so.Line(linewidth=1), so.PolyFit(1))
+    )
+  else:
+     print("Los Alimentos seleccionados no tienen Grasas (Gr)")
+
+def comparacionAumentos(data):
+  predicion = pd.DataFrame(columns=["Rubro","Fecha", "Precio por gr ($)"])
+
+  data['Fecha'] = pd.to_datetime(data['Fecha'], format="%d/%m/%Y")
+  data['Fecha']=data['Fecha'].map(dt.datetime.toordinal)
+  fechas = data["Fecha"].unique()
+
+  # Dataframes Derivados
+  carne_nutricional = data[data["Alimento"].isin(["CARNE PICADA", "BOLA DE LOMO", "ASADO", "PALETA"])].reset_index(drop=True)
+  VF_nutricional = data[data["Alimento"].isin(["TOMATE", "PAPA", "ACELGA", "ZANAHORIA","MANZANA" ,"NARANJA", "CEBOLLA"])].reset_index(drop=True)
+  almacen_nutricional = data[~data["Alimento"].isin(["TOMATE", "PAPA", "ACELGA", "ZANAHORIA","MANZANA" ,"NARANJA", "CEBOLLA","CARNE PICADA", "BOLA DE LOMO", "ASADO", "PALETA"])].reset_index(drop=True)
+
+  # Inicializamos un modelo de Regresion Lineal
+  modelo = linear_model.LinearRegression()
+  
+  for i in range(0,4):
+    if i == 0:
+      #Calculo de Minimos Cuadrados
+      modelo.fit(data[['Fecha']], data[['Precio por gr ($)']])
+      
+      #Coeficientes
+      beta_1 = modelo.coef_[0][0]   # Con .coef_ recuperamos el valor de beta_1 (dentro de un array)
+      beta_0 = modelo.intercept_[0]   # Con .intercept_ recuperamos el valor de beta_0 (dentro de  un array)
+
+      for fecha in fechas:
+        predicion.loc[len(predicion.index)] = ["Todos",dt.date.fromordinal(fecha), beta_1*fecha+beta_0] 
+    
+      data['Fecha']=data['Fecha'].map(dt.date.fromordinal)
+
+    if i == 3:
+      #Calculo de Minimos Cuadrados
+      modelo.fit(carne_nutricional[['Fecha']], carne_nutricional[['Precio por gr ($)']])
+      
+      #Coeficientes
+      beta_1 = modelo.coef_[0][0]   # Con .coef_ recuperamos el valor de beta_1 (dentro de un array)
+      beta_0 = modelo.intercept_[0]   # Con .intercept_ recuperamos el valor de beta_0 (dentro de  un array)
+
+      for fecha in fechas:
+        predicion.loc[len(predicion.index)] = ["Carne",dt.date.fromordinal(fecha), beta_1*fecha+beta_0] 
+    
+      carne_nutricional['Fecha']=carne_nutricional['Fecha'].map(dt.date.fromordinal)
+    
+    if i == 2:
+      #Calculo de Minimos Cuadrados
+      modelo.fit(VF_nutricional[['Fecha']], VF_nutricional[['Precio por gr ($)']])
+      
+      #Coeficientes
+      beta_1 = modelo.coef_[0][0]   # Con .coef_ recuperamos el valor de beta_1 (dentro de un array)
+      beta_0 = modelo.intercept_[0]   # Con .intercept_ recuperamos el valor de beta_0 (dentro de  un array)
+
+      for fecha in fechas:
+        predicion.loc[len(predicion.index)] = ["Frutas y Verduras",dt.date.fromordinal(fecha), beta_1*fecha+beta_0] 
+
+      VF_nutricional['Fecha']=VF_nutricional['Fecha'].map(dt.date.fromordinal)
+
+
+    if i == 1:
+      #Calculo de Minimos Cuadrados
+      modelo.fit(almacen_nutricional[['Fecha']], almacen_nutricional[['Precio por gr ($)']])
+      
+      #Coeficientes
+      beta_1 = modelo.coef_[0][0]   # Con .coef_ recuperamos el valor de beta_1 (dentro de un array)
+      beta_0 = modelo.intercept_[0]   # Con .intercept_ recuperamos el valor de beta_0 (dentro de  un array)
+
+      for fecha in fechas:
+        predicion.loc[len(predicion.index)] = ["Almacen",dt.date.fromordinal(fecha), beta_1*fecha+beta_0] 
+     
+      almacen_nutricional['Fecha']=almacen_nutricional['Fecha'].map(dt.date.fromordinal)
+
+  display(
+    so.Plot(data=predicion, x="Fecha", y="Precio por gr ($)", color="Rubro")
+    .add(so.Line(linewidth=2), so.PolyFit(1))
+  )
+
+  return beta_1, beta_0
+
+
