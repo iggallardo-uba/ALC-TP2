@@ -40,7 +40,7 @@ def sacar_acentos(x):
 #Arreglo para el punto 4
 def arreglo_observacional(x):
   if type(x)==str:
-    if 'LECHE' in x and x!='DULCE DE LECHE':
+    if 'LECHE' in x and (x!='DULCE DE LECHE' or x!="LECHE ENTERA EN POLVO"):
       return "LECHE"
     elif 'ACEITE'  in x:
       return "ACEITE"
@@ -58,7 +58,7 @@ def arreglo_observacional(x):
       return "PAN"
     elif 'YERBA'  in x:
       return "YERBA"
-    elif 'TOMATE'  in x:
+    elif 'TOMATE'  in x and x!="TOMATE ENVASADO":
       return "TOMATE"
     elif 'PAPA'  in x:
       return "PAPA"
@@ -76,7 +76,7 @@ def arreglo_observacional(x):
       return "CEBOLLA"
     elif 'CARNE PICADA' in x:
       return "CARNE PICADA"
-    elif 'PALETA' in x:
+    elif 'PALETA' in x and x!="PALETA COCIDA":
       return "PALETA"
     elif 'BOLA DE LOMO' in x:
       return "BOLA DE LOMO"
@@ -128,8 +128,14 @@ def chequeoDieta(data):
     #Frutas y Verduras
     data_VF = data[data["Verdura/Fruta"] == 1]
 
+    data_Suma = data.drop(columns=["Alimento",	"Cantidad (gr/ml)","Verdura/Fruta"])
+    suma = 0
+
+    for col in data_Suma:
+      suma += sum(data_Suma[col])
+
     #Cantidad Total
-    cantidadTotal = sum(data["Cantidad (gr/ml)"])
+    cantidadTotal = suma
     
     #Maximo/Minimo Proteina
     minProteina = cantidadTotal*0.1
@@ -151,29 +157,47 @@ def chequeoDieta(data):
     fibra = sum(data["Fibra (gr)"])
     VF = sum(data_VF["Cantidad (gr/ml)"])
         
-    #Chequeos
-    print(minProteina, proteina, maxProteina) 
-    if minProteina < proteina < maxProteina:
-        chequeo = False
-      
+    #Chequeos   
+    print("HC")
     print(minHC, HC, maxHC) 
-    if minHC < HC < maxHC:
+    if minHC > HC or HC > maxHC:
         chequeo = False
+        print("False")
         
+    print()
+    print("Proteina")
+    print(minProteina, proteina, maxProteina) 
+    if minProteina > proteina or proteina > maxProteina:
+        chequeo = False
+        print("False")
+        
+    print()
+    print("Grasas")
     print(minGrasas, grasas, maxGrasas) 
-    if minGrasas < grasas < maxGrasas:
+    if minGrasas > grasas or grasas > maxGrasas:
         chequeo = False
+        print("False")
         
+    print()
+    print("Sodio")
     print(Na," > ", 0.2)
     if Na  < 0.2:
         chequeo = False
+        print("False")
         
+        
+    print()
+    print("Fibra")
     print(fibra," > ", 25) 
     if fibra < 25:
         chequeo = False
+        print("False")
         
+    print()
+    print("Fruta y Verduras")
     print(VF, ">=", 400)
     if VF < 400:
         chequeo = False
+        print("False")
         
     return chequeo
